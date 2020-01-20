@@ -1,0 +1,98 @@
+#+OPTIONS: TOC:nil
+* RESEARCH question (goal?)
+Replicate the results of Emerson et. al.
+* Resource list
+** "Immunosequencing identifies signatures of cytomegalovirus exposure history and HLA-mediated effects on the T cell repertoire," Emerson et. al., https://www.ncbi.nlm.nih.gov/pubmed/28369038
+*** Article is behind a paywall, but I have a pdf
+*** Supplemental figures and tables are available online
+*** Notes
+**** ~1e7 unique TCRB chains < ~1e12 circulating T cells (Robins et. al.)
+**** Hypothesis is that TCRB sequences associated with an antigen response will be present in phenotype-positive patients at a higher rate due to clonal expansion
+**** A TCRB sequence is a unique combination of a V gene, CDR3 region, and J gene
+**** For first cohort:
+***** N = 666
+***** M = 89,840,865
+*** Questions
+**** TODO How does the labeling system for V and J genes work?
+**** TODO What does it mean for a TCRB chain to be associated with an HLA allele? Do I need to worry about this?
+***** I think so - need to segregate by latent HLA variables
+***** This quote seems to suggest otherwise:
+"In the case of disease-exposure phenotypes, each of the
+phenotype-associated TCRB chains is likely HLA restricted
+and power to identify phenotype association will vary with HLA allele
+frequency among subjects in the training cohort. Therefore, this
+dimensionality reduction eliminates the segregation of subjects into
+discriminative subspaces according to HLA type in exchange for
+variation in univariate discrimination power according to HLA type."
+**** TODO How does beta binomial likelihood work?
+**** TODO How does Fisher's exact test work? One-tailed versus two-tailed?
+***** This R example replicates Supplementary Figure 2b (one-tailed)
+#+BEGIN_SRC R :exports both
+sample_mat <- matrix(c(61,228,11,341), nrow=2, byrow=TRUE)
+signif(fisher.test(sample_mat, alternative = "greater")$p.value, 2)
+#+END_SRC
+
+#+RESULTS
+: 2.2e-13
+***** TODO I don't know why alternative = "greater"
+**** TODO How are they finding the false discovery rate (FDR)?
+***** It can be approximated with
+\[
+\text{FDR} \approx \frac{1}{b} \sum^b_{i=0}{\frac{r_i}{r_0}
+\]
+***** $r_0$ is the number of rejected null hypothesis in the unpermuted data
+***** $r_i$ is the number of rejected null hypothesis for the $i$ th permutation
+***** they performed $b=100$ permutations
+***** null hypothesis = this TCRB sequence has no effect on the phenotype
+***** permuting class labels = shuffling which patient is +CMV+ phenotype positive or negative?? I don't really get this.
+**** TODO Why are they finding the FDR?
+**** TODO How are they finding "cross-entropy loss" in supplementary figure 3a?
+***** For a P-value threshold of $\phi$, the cross-entropy loss $L(\phi)$ is
+\[
+L(\phi) = - \frac{1}{N} \sum^N_{i=1} \left[ c_i \log{q_i(\phi)} + (1 - c_i) \log{\left(1 - q_i(\phi)\right)} \right]
+\]
+***** $q_i(\phi)$ is the probability that $c_i=1$ with subject $i$ held out from training (cross-validation) with a P-value threshold of $\phi$
+***** If the classifier worked perfectly, the inner term would be 0 for $c_i=1$
+\[
+c_i \log{q_i(\phi)} + (1 - c_i) \log{\left(1 - q_i(\phi)\right)} = 1 \log{1} + 0 \log{0} = 0 + 0 = 0
+\]
+***** and also 0 for $c_i=0$
+\[
+c_i \log{q_i(\phi)} + (1 - c_i) \log{\left(1 - q_i(\phi)\right)} = 0 \log{0} - 1 \log{1} = 0 + 0 = 0
+\]
+***** which makes sense, since a perfect classifier should have no cross-entropy loss
+** "The Immune System in Animals," chapter 49, /Biological Science/, fourth edition, Scott Freeman
+*** Advanced bio textbook chapter on the immune system.
+*** Good background resource.
+** "Comprehensive assessment of T-cell receptor β-chain diversity in αβ T cells," Robins et. al., https://www.ncbi.nlm.nih.gov/pubmed/19706884
+*** Available for free online
+*** Notes:
+**** Estimating T-cell receptor diversity
+**** 1e16 possible alpha beta pairs
+**** Common sequences are "closer to germline"
+**** Interesting stuff about the distribution of CDR3 sequence lengths, V and J types, etc.
+**** Example of "unseen species problem" - how many sequences exist that they did not observe
+*** Questions
+**** TODO What are T cell compartments?
+* Research plan
+** TODO Load data (Postgres again?)
+*** TODO Load sequences into Postgres
+**** I did this slightly wrong last time
+** TODO Dimensionality reduction
+*** TODO For each sequence that appears in more than one patient, build table of the patients it appears in and what their status is
+**** e.g as in Supplementary Figure 2b
+|          | present | absent |
+| positive |      61 |    228 |
+| negative |      11 |    341 |
+*** TODO Determine whether or not the sequence has a significant link to CMV status (by P-value)
+**** This should be *reproducible* so I can find a P-value threshold with minimal cross-entropy loss
+** TODO Build prediction model
+*** Scikit-learn
+*** Naive Bayesian classifier
+*** Other machine learning models? This is where I could expand on the paper.
+** TODO Test model and determine hyper-parameters (e.g. P-value threshold)
+*** Leave-one-out cross-validation
+** TODO Assess model performance on validation data
+*** Compare with paper
+* Meetings
+** TODO Find common free periods in Spring Trimester
