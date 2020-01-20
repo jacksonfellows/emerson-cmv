@@ -21,11 +21,11 @@
 **** This is ambiguous with regards to the raw data. Some questions:
 ***** Does it mean that we should ignore V and J alleles and just consider the genes?
 ****** I don't think so. Some figures/tables from the paper show an allele (e.g. Supplementary Figure 2b).
-***** What about the nucleotide sequence in the "rearrangement" field? Or the TCRD gene or allele? Or any of the other assorted sequence-specific fields?
-***** Not every row has a amino acid sequence in the CDR3 field. Should these rows be discarded?
+***** What about the nucleotide sequence in the =rearrangement= field? Or the TCRD gene or allele? Or any of the other assorted sequence-specific fields?
+***** Not every row has an =amino_acid= sequence. Should these rows be discarded?
 ***** Some rows don't have V and J alleles (+not sure about genes+ some sequences only have a family). Should these rows be discarded?
-***** Does the frame_type field matter? What about the rearrangement_type (shouldn't it always be VDJ recombination)?
+***** Does the =frame_type= field matter? What about =rearrangement_type= (shouldn't it always be VDJ recombination)?
 ***** Should patients with unknown CMV status (25 in cohort 1) be discarded?
 ****** The paper states that "we analyzed the each unique TCRB chain identified for the 641 subjects in cohort 1 with known CMV serostatus" which seems to imply yes.
-***** Some amino_acid fields have \*'s in them. What does this mean/should those sequences be ignored?
+***** Some =amino_acid= fields have =*='s in them. What does this mean/should those sequences be ignored?
 *** They find M = 89,840,865 unique TCRB sequences for the N = 666 subjects in the training cohort.
