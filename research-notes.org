@@ -25,6 +25,7 @@
 ***** Not every row has an =amino_acid= sequence. Should these rows be discarded?
 ***** Some rows don't have V and J alleles (+not sure about genes+ some sequences only have a family). Should these rows be discarded?
 ****** No. Looking at Supplementary Table 2, there are V genes listed with only a family, family+gene, and family+gene+allele.
+***** How should V or J genes be compared if they have different amounts of information (i.e. TCRBV19 vs. TCRBV19-01)? Would this ever arise in practice?
 ***** Does the =frame_type= field matter? What about =rearrangement_type= (shouldn't it always be VDJ recombination)?
 ***** Should patients with unknown CMV status (25 in cohort 1) be discarded?
 ****** Yes. The paper states that "we analyzed each unique TCRB chain identified for the *641 subjects in cohort 1 with known CMV serostatus*" (emphasis added).
