@@ -15,6 +15,33 @@
 | CAGCGCACAGAGCAGGGGGACTCGGCCATGTATCTCTGTGCCAGCAGCTCTACAGGGTCAGGGAATCAGCCCCAGCATTTTGGTGAT | CASSSTGSGNQPQHF | In         | VDJ                |       394 | 12038 | 0.0014113463902219183 | 0.0017795659177795606 |          45 | TCRBV07  | TCRBV07-09 |          | TCRBD01  | TCRBD01-01 |       01 | TCRBJ01  | TCRBJ01-05 |       01 |           4 |            3 |            3 |           4 |             6 |             2 |      36 |       49 |       57 |      51 |      63 |               |                            | 01,03         |                 |                       | null          | null          | null        | null          | HIP02811      | Human       | TCRB          | Deep     | null        |  449264 | 356304 |           85450 |     7508 |               0 |               283037 |               223420 |          54299 |         5318 |                                            0 |                   8529444 |             6764571 |           1622313 |      142560 |                      0 |           0.0647861809 |        16.618187 |   0.0637288466 |            16.956461 |            1003.88 |           154443 | 2.3070258930479204 |                0 |                        0.0 |                              0.00311579253 | 0.00247108727 | v2                           | Human-TCRB-PD1x          | 2013-12-13 22:22:21.368 | Age:34 Years,Biological Sex:Female,Cohort:Cohort 01,Ethnic Group:Non-Hispanic or Latino,HLA MHC class I:HLA-A*01,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*08,HLA MHC class I:HLA-B*35,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*01,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*08,Inferred HLA type:Inferred HLA-B*35,Racial Group:Caucasian,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus - | 0.7930837992806011 | null         | null        |                   0 |            |        |               |
 | TTGGAGATCCAGCGCACAGAGCAGGGGGACTCGGCCATGTATCTCTGTGCCAGCAGCTTAGGGGTCTACGAGCAGTACTTCGGGCCG | CASSLGVYEQYF    | In         | VDJ                |       362 | 10971 | 0.0012862503112746856 | 0.0016218323379265293 |          36 | TCRBV07  | TCRBV07-09 |          |          | unresolved |          | TCRBJ02  | TCRBJ02-07 |       01 |           1 |            0 |            9 |           3 |             1 |             0 |      45 |       -1 |       64 |      61 |      65 |               |                            | 01,03         | TCRBD01,TCRBD02 | TCRBD01-01,TCRBD02-01 | null          | null          | null        | null          | HIP02811      | Human       | TCRB          | Deep     | null        |  449264 | 356304 |           85450 |     7508 |               0 |               283037 |               223420 |          54299 |         5318 |                                            0 |                   8529444 |             6764571 |           1622313 |      142560 |                      0 |           0.0647861809 |        16.618187 |   0.0637288466 |            16.956461 |            1003.88 |           154443 | 2.3070258930479204 |                0 |                        0.0 |                              0.00311579253 | 0.00247108727 | v2                           | Human-TCRB-PD1x          | 2013-12-13 22:22:21.368 | Age:34 Years,Biological Sex:Female,Cohort:Cohort 01,Ethnic Group:Non-Hispanic or Latino,HLA MHC class I:HLA-A*01,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*08,HLA MHC class I:HLA-B*35,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*01,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*08,Inferred HLA type:Inferred HLA-B*35,Racial Group:Caucasian,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus - | 0.7930837992806011 | null         | null        |                   0 |            |        |               |
 | AGCAACATGAGCCCTGAAGACAGCAGCATATATCTCTGCAGCGTCATGGAGGGGAGCTCCTATAATTCACCCCTCCACTTTGGGAAC | CSVMEGSSYNSPLHF | In         | VDJ                |       342 | 10544 | 0.0012361884315085486 |  0.001558709340178409 |          45 | TCRBV29  | TCRBV29-01 |       01 | TCRBD02  | TCRBD02-01 |       02 | TCRBJ01  | TCRBJ01-06 |       01 |           6 |           10 |            0 |           0 |             3 |             3 |      36 |       44 |       53 |      47 |      56 |               |                            |               |                 |                       | null          | null          | null        | Vb 4          | HIP02811      | Human       | TCRB          | Deep     | null        |  449264 | 356304 |           85450 |     7508 |               0 |               283037 |               223420 |          54299 |         5318 |                                            0 |                   8529444 |             6764571 |           1622313 |      142560 |                      0 |           0.0647861809 |        16.618187 |   0.0637288466 |            16.956461 |            1003.88 |           154443 | 2.3070258930479204 |                0 |                        0.0 |                              0.00311579253 | 0.00247108727 | v2                           | Human-TCRB-PD1x          | 2013-12-13 22:22:21.368 | Age:34 Years,Biological Sex:Female,Cohort:Cohort 01,Ethnic Group:Non-Hispanic or Latino,HLA MHC class I:HLA-A*01,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*08,HLA MHC class I:HLA-B*35,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*01,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*08,Inferred HLA type:Inferred HLA-B*35,Racial Group:Caucasian,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus - | 0.7930837992806011 | null         | null        |                   0 |            |        |               |
+*** Here is a 1mb sample of the raw data (both cohorts).
+#+BEGIN_SRC python :session :results value
+import pandas as pd
+
+sample_names = 'rearrangement amino_acid frame_type rearrangement_type templates reads frequency productive_frequency cdr3_length v_family v_gene v_allele d_family d_gene d_allele j_family j_gene j_allele v_deletions d5_deletions d3_deletions j_deletions n2_insertions n1_insertions v_index n1_index n2_index d_index j_index v_family_ties v_gene_ties v_allele_ties d_family_ties d_gene_ties d_allele_ties j_family_ties j_gene_ties j_allele_ties sequence_tags v_shm_count v_shm_indexes antibody sample_name species locus product_subtype kit_pool total_templates productive_templates outofframe_templates stop_templates dj_templates total_rearrangementproductive_rearrangements outofframe_rearrangements stop_rearrangements dj_rearrangements total_reads total_productive_reads total_outofframe_reads total_stop_reads total_dj_reads productive_clonality productive_entropy sample_clonality sample_entropy sample_amount_ng sample_cells_mass_estimate fraction_productive_of_cells_mass_estimate sample_cells fraction_productive_of_cells max_productive_frequency max_frequency counting_method primer_set release_date sample_tags fraction_productive order_name kit_id total_t_cells'.split()
+sample = pd.read_csv('./misc/1mb_sample.tsv', sep='\t', header=None, names=sample_names, index_col=False, na_values=['unresolved'])
+sample[['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+            amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
+0       CASSRTGPGNTIYF  TCRBJ01  TCRBJ01-03       1.0  TCRBV05  TCRBV05-04       1.0
+1    CASSYRANTQGAGEAFF  TCRBJ01  TCRBJ01-01       1.0  TCRBV06         NaN       NaN
+2        CASSPRNTGELFF  TCRBJ02  TCRBJ02-02       1.0  TCRBV03         NaN       NaN
+3      CASSAITGVDSPLHF  TCRBJ01  TCRBJ01-06       1.0  TCRBV05  TCRBV05-05       1.0
+4                  NaN  TCRBJ02  TCRBJ02-02       1.0  TCRBV09  TCRBV09-01       NaN
+..                 ...      ...         ...       ...      ...         ...       ...
+924                NaN  TCRBJ01  TCRBJ01-04       1.0  TCRBV27  TCRBV27-01       1.0
+925       CSATGFNTEAFF  TCRBJ01  TCRBJ01-01       1.0  TCRBV29  TCRBV29-01       1.0
+926     CASRLGWGGTEAFF  TCRBJ01  TCRBJ01-01       1.0  TCRBV04  TCRBV04-02       1.0
+927      CASSLRLTGELFF  TCRBJ02  TCRBJ02-02       1.0  TCRBV27  TCRBV27-01       1.0
+928                NaN  TCRBJ01  TCRBJ01-05       1.0  TCRBV05  TCRBV05-01       1.0
+
+[929 rows x 7 columns]
+#+end_example
+
 ** Extracting unique TCRB sequences
 *** The paper states that a unique TCRB sequence is defined as a "unique combination of a V gene, a CDR3 amino acid sequence, and a J gene."
 **** They state that this criterion "does imply an identical TCRB protein sequence, although, owing to HLA restriction and the potential to pair with different TCRA chains in different T cells, it does not guarantee that two such receptors will have identical antigen specificities."
@@ -25,6 +52,49 @@
 ***** Not every row has an =amino_acid= sequence. Should these rows be discarded?
 ***** Some rows don't have V and J alleles (+not sure about genes+ some sequences only have a family). Should these rows be discarded?
 ****** No. Looking at Supplementary Table 2, there are V genes listed with only a family, family+gene, and family+gene+allele.
+****** In the sample data:
+******* There are very few J genes without gene or allele data.
+#+BEGIN_SRC python :session :results value
+[pd.isna(sample[c]).sum() for c in ['j_family', 'j_gene', 'j_allele']]
+#+END_SRC
+
+#+RESULTS:
+| 0 | 1 | 1 |
+
+******* Which sequence has missing J gene information?
+#+BEGIN_SRC python :session :results value
+sample[pd.isna(sample['j_gene'])][['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
+#+END_SRC
+
+#+RESULTS:
+:            amino_acid j_family j_gene  j_allele v_family v_gene  v_allele
+: 285  CSARDRTGTGYNEQFF  TCRBJ02    NaN       NaN  TCRBV20    NaN       NaN
+
+******* It is much more common for V genes to have missing data.
+#+BEGIN_SRC python :session :results value
+[pd.isna(sample[c]).sum() for c in ['v_family', 'v_gene', 'v_allele']]
+#+END_SRC
+
+#+RESULTS:
+| 1 | 204 | 346 |
+
+******* Which sequence has no =v_family=?
+#+BEGIN_SRC python :session :results value
+sample[pd.isna(sample['v_family'])][['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
+#+END_SRC
+
+#+RESULTS:
+:     amino_acid j_family      j_gene  j_allele v_family v_gene  v_allele
+: 640        NaN  TCRBJ02  TCRBJ02-07       1.0      NaN    NaN       NaN
+
+******* Are there any non-1 alleles?
+#+BEGIN_SRC python :session :results value
+[len(sample[(sample[s + '_allele'] != 1) & pd.notna(sample[s + '_allele'])]) for s in 'vj']
+#+END_SRC
+
+#+RESULTS:
+| 26 | 0 |
+
 ***** How should V or J genes be compared if they have different amounts of information (i.e. TCRBV19 vs. TCRBV19-01)? Would this ever arise in practice?
 ***** Does the =frame_type= field matter? What about =rearrangement_type= (shouldn't it always be VDJ recombination)?
 ***** Should patients with unknown CMV status (25 in cohort 1) be discarded?
