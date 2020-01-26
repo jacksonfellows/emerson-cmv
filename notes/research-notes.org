@@ -1,19 +1,38 @@
-#+OPTIONS: TOC:nil
 * Data loading
+#+PROPERTY: header-args :session :results value :exports both :cache yes
 ** Source format
 *** Adaptive Biotechnologies makes the raw data available as a zip archive at [[https://s3-us-west-2.amazonaws.com/publishedproject-supplements/emerson-2017-natgen/emerson-2017-natgen.zip]].
 *** The dataset consists of one TSV file per patient with each sequence as a row.
 *** Confusingly, some of the fields appear to be per-patient metadata that is repeated on each row.
 *** Here is a 1mb sample of the raw data (both cohorts).
-#+BEGIN_SRC python :session :results value :exports both
+#+BEGIN_SRC python
 import pandas as pd
 
-sample_names = 'rearrangement amino_acid frame_type rearrangement_type templates reads frequency productive_frequency cdr3_length v_family v_gene v_allele d_family d_gene d_allele j_family j_gene j_allele v_deletions d5_deletions d3_deletions j_deletions n2_insertions n1_insertions v_index n1_index n2_index d_index j_index v_family_ties v_gene_ties v_allele_ties d_family_ties d_gene_ties d_allele_ties j_family_ties j_gene_ties j_allele_ties sequence_tags v_shm_count v_shm_indexes antibody sample_name species locus product_subtype kit_pool total_templates productive_templates outofframe_templates stop_templates dj_templates total_rearrangementproductive_rearrangements outofframe_rearrangements stop_rearrangements dj_rearrangements total_reads total_productive_reads total_outofframe_reads total_stop_reads total_dj_reads productive_clonality productive_entropy sample_clonality sample_entropy sample_amount_ng sample_cells_mass_estimate fraction_productive_of_cells_mass_estimate sample_cells fraction_productive_of_cells max_productive_frequency max_frequency counting_method primer_set release_date sample_tags fraction_productive order_name kit_id total_t_cells'.split()
+sample_names = '''rearrangement amino_acid frame_type rearrangement_type
+templates reads frequency productive_frequency cdr3_length v_family
+v_gene v_allele d_family d_gene d_allele j_family j_gene j_allele
+v_deletions d5_deletions d3_deletions j_deletions n2_insertions
+n1_insertions v_index n1_index n2_index d_index j_index v_family_ties
+v_gene_ties v_allele_ties d_family_ties d_gene_ties d_allele_ties
+j_family_ties j_gene_ties j_allele_ties sequence_tags v_shm_count
+v_shm_indexes antibody sample_name species locus product_subtype
+kit_pool total_templates productive_templates outofframe_templates
+stop_templates dj_templates
+total_rearrangements productive_rearrangements outofframe_rearrangements
+stop_rearrangements dj_rearrangements total_reads
+total_productive_reads total_outofframe_reads total_stop_reads
+total_dj_reads productive_clonality productive_entropy
+sample_clonality sample_entropy sample_amount_ng
+sample_cells_mass_estimate fraction_productive_of_cells_mass_estimate
+sample_cells fraction_productive_of_cells max_productive_frequency
+max_frequency counting_method primer_set release_date sample_tags
+fraction_productive order_name kit_id total_t_cells'''.split()
+
 sample = pd.read_csv('./misc/1mb_sample.tsv', sep='\t', header=None, names=sample_names, index_col=False, na_values=['unresolved'])
 sample[['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS[9990f17ec3df7894dd8f9a09148d8d87bba94e73]:
 #+begin_example
             amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
 0       CASSRTGPGNTIYF  TCRBJ01  TCRBJ01-03       1.0  TCRBV05  TCRBV05-04       1.0
@@ -43,53 +62,53 @@ sample[['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v
 ****** No. Looking at Supplementary Table 2, there are V genes listed with only a family, family+gene, and family+gene+allele.
 ****** In the sample data:
 ******* There are very few J genes without gene or allele data.
-#+BEGIN_SRC python :session :results value :exports both
+#+BEGIN_SRC python
 [pd.isna(sample[c]).sum() for c in ['j_family', 'j_gene', 'j_allele']]
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS[86a03261c0dd853dc9458d8e7fb06afa957073a3]:
 | 0 | 1 | 1 |
 
 ******* Which sequence has missing J gene information?
-#+BEGIN_SRC python :session :results value :exports both
+#+BEGIN_SRC python
 sample[pd.isna(sample['j_gene'])][['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS[7c2be2038bed547446793da8a9c8494b9026d7e9]:
 :            amino_acid j_family j_gene  j_allele v_family v_gene  v_allele
 : 285  CSARDRTGTGYNEQFF  TCRBJ02    NaN       NaN  TCRBV20    NaN       NaN
 
 ******* It is much more common for V genes to have missing data.
-#+BEGIN_SRC python :session :results value :exports both
+#+BEGIN_SRC python
 [pd.isna(sample[c]).sum() for c in ['v_family', 'v_gene', 'v_allele']]
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS[351bcef9b3c435c9d5881def8e4d5d6e7f509471]:
 | 1 | 204 | 346 |
 
 ******* Which sequence has no =v_family=?
-#+BEGIN_SRC python :session :results value :exports both
+#+BEGIN_SRC python
 sample[pd.isna(sample['v_family'])][['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS[08a580ccf4e3600116700cd5b22c59bad164a660]:
 :     amino_acid j_family      j_gene  j_allele v_family v_gene  v_allele
 : 640        NaN  TCRBJ02  TCRBJ02-07       1.0      NaN    NaN       NaN
 
 ******* Are there any non-1 alleles?
-#+BEGIN_SRC python :session :results value :exports both
+#+BEGIN_SRC python
 [len(sample[(sample[s + '_allele'] != 1) & pd.notna(sample[s + '_allele'])]) for s in 'vj']
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS[afbd3360a4e4d681d0da3bead4962f15a28073d1]:
 | 26 | 0 |
 
 ******* How many sequences are missing =amino_acid= fields?
-#+BEGIN_SRC python :session :results value :exports both
+#+BEGIN_SRC python
 sample[pd.isna(sample.amino_acid)][['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
 #+END_SRC
 
-#+RESULTS:
+#+RESULTS[8608f45465f8772a899a921acaa4292ca2a510f3]:
 #+begin_example
     amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
 4          NaN  TCRBJ02  TCRBJ02-02       1.0  TCRBV09  TCRBV09-01       NaN
@@ -107,15 +126,13 @@ sample[pd.isna(sample.amino_acid)][['amino_acid', 'j_family', 'j_gene', 'j_allel
 [129 rows x 7 columns]
 #+end_example
 
-******* Does every sequence have a =rearrangement=?
-#+BEGIN_SRC python :session :results value
-sample[pd.isna(sample.rearrangement)]
+******* Are there any sequences without a =rearrangement=?
+#+BEGIN_SRC python
+pd.isna(sample.rearrangement).sum()
 #+END_SRC
 
-#+RESULTS:
-: Empty DataFrame
-: Columns: [rearrangement, amino_acid, frame_type, rearrangement_type, templates, reads, frequency, productive_frequency, cdr3_length, v_family, v_gene, v_allele, d_family, d_gene, d_allele, j_family, j_gene, j_allele, v_deletions, d5_deletions, d3_deletions, j_deletions, n2_insertions, n1_insertions, v_index, n1_index, n2_index, d_index, j_index, v_family_ties, v_gene_ties, v_allele_ties, d_family_ties, d_gene_ties, d_allele_ties, j_family_ties, j_gene_ties, j_allele_ties, sequence_tags, v_shm_count, v_shm_indexes, antibody, sample_name, species, locus, product_subtype, kit_pool, total_templates, productive_templates, outofframe_templates, stop_templates, dj_templates, total_rearrangementproductive_rearrangements, outofframe_rearrangements, stop_rearrangements, dj_rearrangements, total_reads, total_productive_reads, total_outofframe_reads, total_stop_reads, total_dj_reads, productive_clonality, productive_entropy, sample_clonality, sample_entropy, sample_amount_ng, sample_cells_mass_estimate, fraction_productive_of_cells_mass_estimate, sample_cells, fraction_productive_of_cells, max_productive_frequency, max_frequency, counting_method, primer_set, release_date, sample_tags, fraction_productive, order_name, kit_id, total_t_cells]
-: Index: []
+#+RESULTS[395ea39c25a01801473c46fc63ad45d91c5715b4]:
+: 0
 
 ***** How should V or J genes be compared if they have different amounts of information (i.e. TCRBV19 vs. TCRBV19-01)? Would this ever arise in practice?
 ***** Does the =frame_type= field matter? What about =rearrangement_type= (shouldn't it always be VDJ recombination)?
