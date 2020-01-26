@@ -27,13 +27,14 @@ variation in univariate discrimination power according to HLA type."
 **** TODO How does beta binomial likelihood work?
 **** TODO How does Fisher's exact test work? One-tailed versus two-tailed?
 ***** This R example replicates Supplementary Figure 2b (one-tailed)
-#+BEGIN_SRC R :exports both
+#+BEGIN_SRC R
 sample_mat <- matrix(c(61,228,11,341), nrow=2, byrow=TRUE)
 signif(fisher.test(sample_mat, alternative = "greater")$p.value, 2)
 #+END_SRC
 
-#+RESULTS
+#+RESULTS:
 : 2.2e-13
+
 ***** TODO I don't know why alternative = "greater"
 **** TODO How are they finding the false discovery rate (FDR)?
 ***** It can be approximated with
