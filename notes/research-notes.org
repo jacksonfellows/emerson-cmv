@@ -29,10 +29,11 @@ max_frequency counting_method primer_set release_date sample_tags
 fraction_productive order_name kit_id total_t_cells'''.split()
 
 sample = pd.read_csv('./misc/1mb_sample.tsv', sep='\t', header=None, names=sample_names, index_col=False, na_values=['unresolved'])
-sample[['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
+cdr3_v_j = ['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']
+sample[cdr3_v_j]
 #+END_SRC
 
-#+RESULTS[9990f17ec3df7894dd8f9a09148d8d87bba94e73]:
+#+RESULTS[5eba965a295cbaa1e2eb0ee05a1d99bd4c656887]:
 #+begin_example
             amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
 0       CASSRTGPGNTIYF  TCRBJ01  TCRBJ01-03       1.0  TCRBV05  TCRBV05-04       1.0
@@ -71,10 +72,10 @@ sample[['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v
 
 ******* Which sequence has missing J gene information?
 #+BEGIN_SRC python
-sample[pd.isna(sample['j_gene'])][['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
+sample[pd.isna(sample['j_gene'])][cdr3_v_j]
 #+END_SRC
 
-#+RESULTS[7c2be2038bed547446793da8a9c8494b9026d7e9]:
+#+RESULTS[d5d98969a2e37ee30cb9f92a1848a3138761dcec]:
 :            amino_acid j_family j_gene  j_allele v_family v_gene  v_allele
 : 285  CSARDRTGTGYNEQFF  TCRBJ02    NaN       NaN  TCRBV20    NaN       NaN
 
@@ -88,10 +89,10 @@ sample[pd.isna(sample['j_gene'])][['amino_acid', 'j_family', 'j_gene', 'j_allele
 
 ******* Which sequence has no =v_family=?
 #+BEGIN_SRC python
-sample[pd.isna(sample['v_family'])][['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
+sample[pd.isna(sample['v_family'])][cdr3_v_j]
 #+END_SRC
 
-#+RESULTS[08a580ccf4e3600116700cd5b22c59bad164a660]:
+#+RESULTS[52333642085d64415d80e2fa936bbcee03295521]:
 :     amino_acid j_family      j_gene  j_allele v_family v_gene  v_allele
 : 640        NaN  TCRBJ02  TCRBJ02-07       1.0      NaN    NaN       NaN
 
@@ -105,10 +106,10 @@ sample[pd.isna(sample['v_family'])][['amino_acid', 'j_family', 'j_gene', 'j_alle
 
 ******* How many sequences are missing =amino_acid= fields?
 #+BEGIN_SRC python
-sample[pd.isna(sample.amino_acid)][['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']]
+sample[pd.isna(sample.amino_acid)][cdr3_v_j]
 #+END_SRC
 
-#+RESULTS[8608f45465f8772a899a921acaa4292ca2a510f3]:
+#+RESULTS[ee7484bcc0c7af6061eac28468e39f3fd7d699dc]:
 #+begin_example
     amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
 4          NaN  TCRBJ02  TCRBJ02-02       1.0  TCRBV09  TCRBV09-01       NaN
