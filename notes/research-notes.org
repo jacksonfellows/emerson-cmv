@@ -140,4 +140,12 @@ pd.isna(sample.rearrangement).sum()
 ***** Should patients with unknown CMV status (25 in cohort 1) be discarded?
 ****** Yes. The paper states that "we analyzed each unique TCRB chain identified for the *641 subjects in cohort 1 with known CMV serostatus*" (emphasis added).
 ***** Some =amino_acid= fields have =*='s in them. What does this mean/should those sequences be ignored?
+****** These sequences appear to be the same as the ones where =frame_type= is "Stop."
+#+BEGIN_SRC python
+(sample.amino_acid.str.contains('\*').fillna(False) == (sample.frame_type == 'Stop')).all()
+#+END_SRC
+
+#+RESULTS[2e1201fe2f20a76d68089567a2c5960c4a32abfd]:
+: True
+
 *** They find M = 89,840,865 unique TCRB sequences for the N = 666 subjects in the training cohort.
