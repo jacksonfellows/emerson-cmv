@@ -1,9 +1,9 @@
 * Data loading
 #+PROPERTY: header-args :session :results value :exports both :cache yes
 ** Source format
-*** Adaptive Biotechnologies makes the raw data available as a zip archive at [[https://s3-us-west-2.amazonaws.com/publishedproject-supplements/emerson-2017-natgen/emerson-2017-natgen.zip]].
-*** The dataset consists of one TSV file per patient with each sequence as a row.
-*** Confusingly, some of the fields appear to be per-patient metadata that is repeated on each row.
+Adaptive Biotechnologies makes the raw data available as a zip archive at [[https://s3-us-west-2.amazonaws.com/publishedproject-supplements/emerson-2017-natgen/emerson-2017-natgen.zip]].
+The dataset consists of one TSV file per patient with each sequence as a row.
+Confusingly, some of the fields appear to be per-patient metadata that is repeated on each row.
 *** Here is a 1mb sample of the raw data (both cohorts).
 #+BEGIN_SRC python
 import pandas as pd
@@ -27,42 +27,40 @@ sample_cells_mass_estimate fraction_productive_of_cells_mass_estimate
 sample_cells fraction_productive_of_cells max_productive_frequency
 max_frequency counting_method primer_set release_date sample_tags
 fraction_productive order_name kit_id total_t_cells'''.split()
-
-sample = pd.read_csv('./misc/1mb_sample.tsv', sep='\t', header=None, names=sample_names, index_col=False, na_values=['unresolved'])
+sample = pd.read_csv('../misc/1mb_sample.tsv', sep='\t', header=None, names=sample_names, index_col=False, na_values=['unresolved'])
 cdr3_v_j = ['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']
 sample[cdr3_v_j]
 #+END_SRC
 
-#+RESULTS[5eba965a295cbaa1e2eb0ee05a1d99bd4c656887]:
+#+RESULTS[c2633c79560fb373aae1ac966916007436f9daa4]:
 #+begin_example
-            amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
-0       CASSRTGPGNTIYF  TCRBJ01  TCRBJ01-03       1.0  TCRBV05  TCRBV05-04       1.0
-1    CASSYRANTQGAGEAFF  TCRBJ01  TCRBJ01-01       1.0  TCRBV06         NaN       NaN
-2        CASSPRNTGELFF  TCRBJ02  TCRBJ02-02       1.0  TCRBV03         NaN       NaN
-3      CASSAITGVDSPLHF  TCRBJ01  TCRBJ01-06       1.0  TCRBV05  TCRBV05-05       1.0
-4                  NaN  TCRBJ02  TCRBJ02-02       1.0  TCRBV09  TCRBV09-01       NaN
-..                 ...      ...         ...       ...      ...         ...       ...
-924                NaN  TCRBJ01  TCRBJ01-04       1.0  TCRBV27  TCRBV27-01       1.0
-925       CSATGFNTEAFF  TCRBJ01  TCRBJ01-01       1.0  TCRBV29  TCRBV29-01       1.0
-926     CASRLGWGGTEAFF  TCRBJ01  TCRBJ01-01       1.0  TCRBV04  TCRBV04-02       1.0
-927      CASSLRLTGELFF  TCRBJ02  TCRBJ02-02       1.0  TCRBV27  TCRBV27-01       1.0
-928                NaN  TCRBJ01  TCRBJ01-05       1.0  TCRBV05  TCRBV05-01       1.0
+            amino_acid j_family      j_gene  ...  v_family      v_gene v_allele
+0       CASSRTGPGNTIYF  TCRBJ01  TCRBJ01-03  ...   TCRBV05  TCRBV05-04      1.0
+1    CASSYRANTQGAGEAFF  TCRBJ01  TCRBJ01-01  ...   TCRBV06         NaN      NaN
+2        CASSPRNTGELFF  TCRBJ02  TCRBJ02-02  ...   TCRBV03         NaN      NaN
+3      CASSAITGVDSPLHF  TCRBJ01  TCRBJ01-06  ...   TCRBV05  TCRBV05-05      1.0
+4                  NaN  TCRBJ02  TCRBJ02-02  ...   TCRBV09  TCRBV09-01      NaN
+..                 ...      ...         ...  ...       ...         ...      ...
+924                NaN  TCRBJ01  TCRBJ01-04  ...   TCRBV27  TCRBV27-01      1.0
+925       CSATGFNTEAFF  TCRBJ01  TCRBJ01-01  ...   TCRBV29  TCRBV29-01      1.0
+926     CASRLGWGGTEAFF  TCRBJ01  TCRBJ01-01  ...   TCRBV04  TCRBV04-02      1.0
+927      CASSLRLTGELFF  TCRBJ02  TCRBJ02-02  ...   TCRBV27  TCRBV27-01      1.0
+928                NaN  TCRBJ01  TCRBJ01-05  ...   TCRBV05  TCRBV05-01      1.0
 
 [929 rows x 7 columns]
 #+end_example
 
 ** Extracting unique TCRB sequences
-*** The paper states that a unique TCRB sequence is defined as a "unique combination of a V gene, a CDR3 amino acid sequence, and a J gene."
-**** They state that this criterion "does imply an identical TCRB protein sequence, although, owing to HLA restriction and the potential to pair with different TCRA chains in different T cells, it does not guarantee that two such receptors will have identical antigen specificities."
-**** This is ambiguous with regards to the raw data. Some questions:
-***** Does it mean that we should ignore V and J alleles and just consider the genes?
-****** I don't think so. Some figures/tables from the paper show an allele (e.g. Supplementary Figure 2b).
-***** What about the nucleotide sequence in the =rearrangement= field? Or the TCRD gene or allele? Or any of the other assorted sequence-specific fields?
-***** Not every row has an =amino_acid= sequence. Should these rows be discarded?
-***** Some rows don't have V and J alleles (+not sure about genes+ some sequences only have a family). Should these rows be discarded?
-****** No. Looking at Supplementary Table 2, there are V genes listed with only a family, family+gene, and family+gene+allele.
-****** In the sample data:
-******* There are very few J genes without gene or allele data.
+The paper states that a unique TCRB sequence is defined as a "unique combination of a V gene, a CDR3 amino acid sequence, and a J gene."
+They state that this criterion "does imply an identical TCRB protein sequence, although, owing to HLA restriction and the potential to pair with different TCRA chains in different T cells, it does not guarantee that two such receptors will have identical antigen specificities."
+This is ambiguous with regards to the raw data. Some questions:
+*** Does it mean that we should ignore V and J alleles and just consider the genes?
+I don't think so. Some figures/tables from the paper show an allele (e.g. Supplementary Figure 2b).
+*** What about the nucleotide sequence in the =rearrangement= field? Or the TCRD gene or allele? Or any of the other assorted sequence-specific fields?
+*** Not every row has an =amino_acid= sequence. Should these rows be discarded?
+*** Some rows don't have V and J alleles (+not sure about genes+ some sequences only have a family). Should these rows be discarded?
+No. Looking at Supplementary Table 2, there are V genes listed with only a family, family+gene, and family+gene+allele.
+In the sample data, there are very few J genes without gene or allele data.
 #+BEGIN_SRC python
 [pd.isna(sample[c]).sum() for c in ['j_family', 'j_gene', 'j_allele']]
 #+END_SRC
@@ -70,7 +68,7 @@ sample[cdr3_v_j]
 #+RESULTS[86a03261c0dd853dc9458d8e7fb06afa957073a3]:
 | 0 | 1 | 1 |
 
-******* Which sequence has missing J gene information?
+***** Which sequence has missing J gene information?
 #+BEGIN_SRC python
 sample[pd.isna(sample['j_gene'])][cdr3_v_j]
 #+END_SRC
@@ -79,7 +77,7 @@ sample[pd.isna(sample['j_gene'])][cdr3_v_j]
 :            amino_acid j_family j_gene  j_allele v_family v_gene  v_allele
 : 285  CSARDRTGTGYNEQFF  TCRBJ02    NaN       NaN  TCRBV20    NaN       NaN
 
-******* It is much more common for V genes to have missing data.
+***** It is much more common for V genes to have missing data.
 #+BEGIN_SRC python
 [pd.isna(sample[c]).sum() for c in ['v_family', 'v_gene', 'v_allele']]
 #+END_SRC
@@ -87,7 +85,7 @@ sample[pd.isna(sample['j_gene'])][cdr3_v_j]
 #+RESULTS[351bcef9b3c435c9d5881def8e4d5d6e7f509471]:
 | 1 | 204 | 346 |
 
-******* Which sequence has no =v_family=?
+***** Which sequence has no =v_family=?
 #+BEGIN_SRC python
 sample[pd.isna(sample['v_family'])][cdr3_v_j]
 #+END_SRC
@@ -96,7 +94,7 @@ sample[pd.isna(sample['v_family'])][cdr3_v_j]
 :     amino_acid j_family      j_gene  j_allele v_family v_gene  v_allele
 : 640        NaN  TCRBJ02  TCRBJ02-07       1.0      NaN    NaN       NaN
 
-******* Are there any non-1 alleles?
+***** Are there any non-1 alleles?
 #+BEGIN_SRC python
 [len(sample[(sample[s + '_allele'] != 1) & pd.notna(sample[s + '_allele'])]) for s in 'vj']
 #+END_SRC
@@ -104,7 +102,7 @@ sample[pd.isna(sample['v_family'])][cdr3_v_j]
 #+RESULTS[afbd3360a4e4d681d0da3bead4962f15a28073d1]:
 | 26 | 0 |
 
-******* How many sequences are missing =amino_acid= fields?
+***** How many sequences are missing =amino_acid= fields?
 #+BEGIN_SRC python
 sample[pd.isna(sample.amino_acid)][cdr3_v_j]
 #+END_SRC
@@ -127,7 +125,7 @@ sample[pd.isna(sample.amino_acid)][cdr3_v_j]
 [129 rows x 7 columns]
 #+end_example
 
-******* Are there any sequences without a =rearrangement=?
+***** Are there any sequences without a =rearrangement=?
 #+BEGIN_SRC python
 pd.isna(sample.rearrangement).sum()
 #+END_SRC
@@ -135,12 +133,49 @@ pd.isna(sample.rearrangement).sum()
 #+RESULTS[395ea39c25a01801473c46fc63ad45d91c5715b4]:
 : 0
 
-***** How should V or J genes be compared if they have different amounts of information (i.e. TCRBV19 vs. TCRBV19-01)? Would this ever arise in practice?
-***** Does the =frame_type= field matter? What about =rearrangement_type= (shouldn't it always be VDJ recombination)?
-***** Should patients with unknown CMV status (25 in cohort 1) be discarded?
-****** Yes. The paper states that "we analyzed each unique TCRB chain identified for the *641 subjects in cohort 1 with known CMV serostatus*" (emphasis added).
-***** Some =amino_acid= fields have =*='s in them. What does this mean/should those sequences be ignored?
-****** These sequences appear to be the same as the ones where =frame_type= is "Stop."
+*** How should V or J genes be compared if they have different amounts of information (i.e. TCRBV19 vs. TCRBV19-01)? Would this ever arise in practice?
+*** Does the =frame_type= field matter? What about =rearrangement_type= (shouldn't it always be VDJ recombination)?
+#+BEGIN_SRC python
+sample[sample.frame_type != 'In'][['frame_type'] + cdr3_v_j]
+#+END_SRC
+
+#+RESULTS[a45de470fb315b32b285ba2ea4f9218b0a22630f]:
+#+begin_example
+    frame_type         amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
+4          Out                NaN  TCRBJ02  TCRBJ02-02       1.0  TCRBV09  TCRBV09-01       NaN
+36         Out                NaN  TCRBJ02  TCRBJ02-03       1.0  TCRBV28  TCRBV28-01       1.0
+46        Stop  CATSRDL*DRDHSPLHF  TCRBJ01  TCRBJ01-06       1.0  TCRBV15  TCRBV15-01       1.0
+56         Out                NaN  TCRBJ02  TCRBJ02-04       1.0  TCRBV07  TCRBV07-09       NaN
+63         Out                NaN  TCRBJ02  TCRBJ02-07       1.0  TCRBV20         NaN       NaN
+..         ...                ...      ...         ...       ...      ...         ...       ...
+909        Out                NaN  TCRBJ02  TCRBJ02-01       1.0  TCRBV12         NaN       NaN
+911        Out                NaN  TCRBJ02  TCRBJ02-03       1.0  TCRBV06  TCRBV06-08       1.0
+916        Out                NaN  TCRBJ02  TCRBJ02-04       1.0  TCRBV03         NaN       NaN
+924        Out                NaN  TCRBJ01  TCRBJ01-04       1.0  TCRBV27  TCRBV27-01       1.0
+928        Out                NaN  TCRBJ01  TCRBJ01-05       1.0  TCRBV05  TCRBV05-01       1.0
+
+[144 rows x 8 columns]
+#+end_example
+
+#+BEGIN_SRC python
+sample[sample.rearrangement_type != 'VDJ'][['rearrangement_type'] + cdr3_v_j]
+#+END_SRC
+
+#+RESULTS[5fc87ed0f9828e870957cfcdaab8d4d9bfbf47cf]:
+:     rearrangement_type    amino_acid j_family  ... v_family      v_gene v_allele
+: 30                  VJ    CAWSDFEQYF  TCRBJ02  ...  TCRBV30  TCRBV30-01      1.0
+: 85                  VJ    CASSLDTQYF  TCRBJ02  ...  TCRBV07  TCRBV07-09      NaN
+: 226                 VJ  CATSESTDTQYF  TCRBJ02  ...  TCRBV24         NaN      NaN
+: 289                 VJ  CASSYSPYEQYF  TCRBJ02  ...  TCRBV06  TCRBV06-05      1.0
+: 423                 VJ           NaN  TCRBJ01  ...  TCRBV04  TCRBV04-03      1.0
+: 458                 VJ  CASSSYNSPLHF  TCRBJ01  ...  TCRBV19  TCRBV19-01      NaN
+:
+: [6 rows x 8 columns]
+
+*** Should patients with unknown CMV status (25 in cohort 1) be discarded?
+Yes. The paper states that "we analyzed each unique TCRB chain identified for the *641 subjects in cohort 1 with known CMV serostatus*" (emphasis added).
+*** Some =amino_acid= fields have =*='s in them. What does this mean/should those sequences be ignored?
+These sequences appear to be the same as the ones where =frame_type= is "Stop."
 #+BEGIN_SRC python
 (sample.amino_acid.str.contains('\*').fillna(False) == (sample.frame_type == 'Stop')).all()
 #+END_SRC
