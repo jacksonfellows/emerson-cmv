@@ -1,11 +1,14 @@
+#+TITLE: Research Notes
+#+PROPERTY: header-args :cache yes
 * Data loading
 ** Source format
 Adaptive Biotechnologies makes the raw data available as a zip archive at [[https://s3-us-west-2.amazonaws.com/publishedproject-supplements/emerson-2017-natgen/emerson-2017-natgen.zip]].
 The dataset consists of one TSV file per patient with each sequence as a row.
 Confusingly, some of the fields appear to be per-patient metadata that is repeated on each row.
-*** Here is a 1mb sample of the raw data (both cohorts).
+
 #+NAME: load_data
-#+BEGIN_SRC python :exports code
+#+CAPTION: =../tools/load_dataframe.py=
+#+BEGIN_SRC python :tangle ../tools/load_dataframe.py :exports code
 import pandas as pd
 
 sample_names = '''rearrangement amino_acid frame_type rearrangement_type
@@ -28,28 +31,30 @@ sample_cells fraction_productive_of_cells max_productive_frequency
 max_frequency counting_method primer_set release_date sample_tags
 fraction_productive order_name kit_id total_t_cells'''.split()
 
-def load_data(filename):
+def load_dataframe(filename):
     return pd.read_csv(filename,
                        sep='\t',
                        header=None,
                        names=sample_names,
                        index_col=False,
                        na_values=['unresolved'])
+
+cdr3_v_j = ['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']
 #+END_SRC
 
+*** Here is a 1mb sample of the raw data (both cohorts).
 #+BEGIN_SRC python :session sample :noweb yes :exports none
-<<load_data>>
+<<load_dataframe>>
 #+END_SRC
 
-#+RESULTS[d192346553cc0f3a54f65a529d105abd1743f9ad]:
+#+RESULTS[a64d2268d5812a0e11b86288b04545af308dff04]:
 
 #+BEGIN_SRC python :session sample :exports both
-sample = load_data('../misc/1mb_sample.tsv')
-cdr3_v_j = ['amino_acid', 'j_family', 'j_gene', 'j_allele', 'v_family', 'v_gene', 'v_allele']
+sample = load_dataframe('../misc/1mb_sample.tsv')
 sample[cdr3_v_j]
 #+END_SRC
 
-#+RESULTS[54bba229c8660934b42f4a5d5647b355a5fd9649]:
+#+RESULTS[eb3ba7a1a52d0e39f97e2e5d77ef7824d2e01e1d]:
 #+begin_example
             amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
 0       CASSRTGPGNTIYF  TCRBJ01  TCRBJ01-03       1.0  TCRBV05  TCRBV05-04       1.0
@@ -70,56 +75,22 @@ sample[cdr3_v_j]
 ** Extracting unique TCRB sequences
 The paper states that a unique TCRB sequence is defined as a "unique combination of a V gene, a CDR3 amino acid sequence, and a J gene."
 They state that this criterion "does imply an identical TCRB protein sequence, although, owing to HLA restriction and the potential to pair with different TCRA chains in different T cells, it does not guarantee that two such receptors will have identical antigen specificities."
-This is ambiguous with regards to the raw data. Some questions:
-*** Does it mean that we should ignore V and J alleles and just consider the genes?
+They find M = 89,840,865 unique TCRB sequences for the N = 666 subjects in the training cohort.
+This is ambiguous with regards to the raw data.
+*** Some questions
+**** Does it mean that we should ignore V and J alleles and just consider the genes?
 I don't think so. Some figures/tables from the paper show an allele (e.g. Supplementary Figure 2b).
-*** What about the nucleotide sequence in the =rearrangement= field? Or the TCRD gene or allele? Or any of the other assorted sequence-specific fields?
-*** Not every row has an =amino_acid= sequence. Should these rows be discarded?
-*** Some rows don't have V and J alleles (+not sure about genes+ some sequences only have a family). Should these rows be discarded?
-No. Looking at Supplementary Table 2, there are V genes listed with only a family, family+gene, and family+gene+allele.
-In the sample data, there are very few J genes without gene or allele data.
+**** What about the nucleotide sequence in the =rearrangement= field? Or the TCRD gene or allele? Or any of the other assorted sequence-specific fields?
+Are there any sequences without a =rearrangement=?
 #+BEGIN_SRC python :session sample :exports both
-[pd.isna(sample[c]).sum() for c in ['j_family', 'j_gene', 'j_allele']]
+pd.isna(sample.rearrangement).sum()
 #+END_SRC
 
-#+RESULTS[dcfc703e1dc0dff2c89cce9bc36d66ecbb2abbc3]:
-| 0 | 1 | 1 |
+#+RESULTS[e80536b5f93f1b2aaee3434b4ce89d5ce9f0ebae]:
+: 0
 
-***** Which sequence has missing J gene information?
-#+BEGIN_SRC python :session sample :exports both
-sample[pd.isna(sample['j_gene'])][cdr3_v_j]
-#+END_SRC
-
-#+RESULTS[a9088a2a25fae52dcdd68d35e55a2ef661b72f82]:
-:            amino_acid j_family j_gene  j_allele v_family v_gene  v_allele
-: 285  CSARDRTGTGYNEQFF  TCRBJ02    NaN       NaN  TCRBV20    NaN       NaN
-
-***** It is much more common for V genes to have missing data.
-#+BEGIN_SRC python :session sample :exports both
-[pd.isna(sample[c]).sum() for c in ['v_family', 'v_gene', 'v_allele']]
-#+END_SRC
-
-#+RESULTS[ab986c56285e88849ddee5def4d7be3bc5bce4b4]:
-| 1 | 204 | 346 |
-
-***** Which sequence has no =v_family=?
-#+BEGIN_SRC python :session sample :exports both
-sample[pd.isna(sample['v_family'])][cdr3_v_j]
-#+END_SRC
-
-#+RESULTS[52333642085d64415d80e2fa936bbcee03295521]:
-:     amino_acid j_family      j_gene  j_allele v_family v_gene  v_allele
-: 640        NaN  TCRBJ02  TCRBJ02-07       1.0      NaN    NaN       NaN
-
-***** Are there any non-1 alleles?
-#+BEGIN_SRC python :session sample :exports both
-[len(sample[(sample[s + '_allele'] != 1) & pd.notna(sample[s + '_allele'])]) for s in 'vj']
-#+END_SRC
-
-#+RESULTS[afbd3360a4e4d681d0da3bead4962f15a28073d1]:
-| 26 | 0 |
-
-***** How many sequences are missing =amino_acid= fields?
+**** Not every row has an =amino_acid= sequence. Should these rows be discarded?
+How many sequences are missing =amino_acid= fields?
 #+BEGIN_SRC python :session sample :exports both
 sample[pd.isna(sample.amino_acid)][cdr3_v_j]
 #+END_SRC
@@ -142,16 +113,26 @@ sample[pd.isna(sample.amino_acid)][cdr3_v_j]
 [129 rows x 7 columns]
 #+end_example
 
-***** Are there any sequences without a =rearrangement=?
+**** Some rows don't have V and J alleles (+not sure about genes+ some sequences only have a family). Should these rows be discarded?
+No. Looking at Supplementary Table 2, there are V genes listed with only a family, family+gene, and family+gene+allele.
+In the sample data, there are very few J genes without gene or allele data.
 #+BEGIN_SRC python :session sample :exports both
-pd.isna(sample.rearrangement).sum()
+[pd.isna(sample[c]).sum() for c in ['j_family', 'j_gene', 'j_allele']]
 #+END_SRC
 
-#+RESULTS[395ea39c25a01801473c46fc63ad45d91c5715b4]:
-: 0
+#+RESULTS[dcfc703e1dc0dff2c89cce9bc36d66ecbb2abbc3]:
+| 0 | 1 | 1 |
 
-*** How should V or J genes be compared if they have different amounts of information (i.e. TCRBV19 vs. TCRBV19-01)? Would this ever arise in practice?
-*** Does the =frame_type= field matter? What about =rearrangement_type= (shouldn't it always be VDJ recombination)?
+It is much more common for V genes to have missing data.
+#+BEGIN_SRC python :session sample :exports both
+[pd.isna(sample[c]).sum() for c in ['v_family', 'v_gene', 'v_allele']]
+#+END_SRC
+
+#+RESULTS[ab986c56285e88849ddee5def4d7be3bc5bce4b4]:
+| 1 | 204 | 346 |
+
+**** How should V or J genes be compared if they have different amounts of information (i.e. TCRBV19 vs. TCRBV19-01)? Would this ever arise in practice?
+**** Does the =frame_type= field matter?
 #+BEGIN_SRC python :session sample :exports both
 sample[sample.frame_type != 'In'][['frame_type'] + cdr3_v_j]
 #+END_SRC
@@ -174,30 +155,93 @@ sample[sample.frame_type != 'In'][['frame_type'] + cdr3_v_j]
 [144 rows x 8 columns]
 #+end_example
 
+When =frame_type= is "Out," is =amino_acid= always =NaN=?
 #+BEGIN_SRC python :session sample :exports both
-sample[sample.rearrangement_type != 'VDJ'][['rearrangement_type'] + cdr3_v_j]
+(pd.isna(sample.amino_acid) == (sample.frame_type == 'Out')).all()
 #+END_SRC
 
-#+RESULTS[5fc87ed0f9828e870957cfcdaab8d4d9bfbf47cf]:
-:     rearrangement_type    amino_acid j_family  ... v_family      v_gene v_allele
-: 30                  VJ    CAWSDFEQYF  TCRBJ02  ...  TCRBV30  TCRBV30-01      1.0
-: 85                  VJ    CASSLDTQYF  TCRBJ02  ...  TCRBV07  TCRBV07-09      NaN
-: 226                 VJ  CATSESTDTQYF  TCRBJ02  ...  TCRBV24         NaN      NaN
-: 289                 VJ  CASSYSPYEQYF  TCRBJ02  ...  TCRBV06  TCRBV06-05      1.0
-: 423                 VJ           NaN  TCRBJ01  ...  TCRBV04  TCRBV04-03      1.0
-: 458                 VJ  CASSSYNSPLHF  TCRBJ01  ...  TCRBV19  TCRBV19-01      NaN
-:
-: [6 rows x 8 columns]
+#+RESULTS[32c954041fa4118ca8b3e90de427ad56f0ce1026]:
+: True
 
-*** Should patients with unknown CMV status (25 in cohort 1) be discarded?
-Yes. The paper states that "we analyzed each unique TCRB chain identified for the *641 subjects in cohort 1 with known CMV serostatus*" (emphasis added).
-*** Some =amino_acid= fields have =*='s in them. What does this mean/should those sequences be ignored?
-These sequences appear to be the same as the ones where =frame_type= is "Stop."
+When =frame_type= is "Stop," does =amino_acid= always contain a =*=? What does this mean?
 #+BEGIN_SRC python :session sample :exports both
 (sample.amino_acid.str.contains('\*').fillna(False) == (sample.frame_type == 'Stop')).all()
 #+END_SRC
 
-#+RESULTS[2e1201fe2f20a76d68089567a2c5960c4a32abfd]:
+#+RESULTS[752f81d79e8dab463effbd3de0e29641d2ea1635]:
 : True
 
-*** They find M = 89,840,865 unique TCRB sequences for the N = 666 subjects in the training cohort.
+**** What about =rearrangement_type= (shouldn't it always be VDJ recombination)?
+#+BEGIN_SRC python :session sample :exports both
+sample[sample.rearrangement_type != 'VDJ'][['rearrangement_type'] + cdr3_v_j]
+#+END_SRC
+
+#+RESULTS[0bd73466cb0a9d6993b1cd5ac61dae416597f38c]:
+:     rearrangement_type    amino_acid j_family      j_gene  j_allele v_family      v_gene  v_allele
+: 30                  VJ    CAWSDFEQYF  TCRBJ02  TCRBJ02-07       1.0  TCRBV30  TCRBV30-01       1.0
+: 85                  VJ    CASSLDTQYF  TCRBJ02  TCRBJ02-03       1.0  TCRBV07  TCRBV07-09       NaN
+: 226                 VJ  CATSESTDTQYF  TCRBJ02  TCRBJ02-03       1.0  TCRBV24         NaN       NaN
+: 289                 VJ  CASSYSPYEQYF  TCRBJ02  TCRBJ02-07       1.0  TCRBV06  TCRBV06-05       1.0
+: 423                 VJ           NaN  TCRBJ01  TCRBJ01-01       1.0  TCRBV04  TCRBV04-03       1.0
+: 458                 VJ  CASSSYNSPLHF  TCRBJ01  TCRBJ01-06       1.0  TCRBV19  TCRBV19-01       NaN
+
+**** Should patients with unknown CMV status (25 in cohort 1) be discarded?
+Yes. The paper states that "we analyzed each unique TCRB chain identified for the *641 subjects in cohort 1 with known CMV serostatus*" (emphasis added).
+
+*** My plan
+**** Load the raw data
+Load the fields the paper references as defining a unique sequence (=amino_acid= and =[vj]_{family|gene|allele}=) into PostgreSQL.
+Try to do as much filtering as possible in the database, that way I can always restart.
+***** User identification
+Also include =sample_name= in each row.
+For the real data files, there is only one =sample_name= per file.
+That should allow the use of one big table at the start.
+Don't worry about storing any per-sample data (e.g. CMV serostatus).
+That will come later in its own table.
+#+BEGIN_SRC python :session sample :exports both
+sample['sample_name']
+#+END_SRC
+
+#+RESULTS[23762aeb0d8b136871ff822439437d95bc11d9ad]:
+#+begin_example
+0          HIP00110
+1          HIP00169
+2          HIP00594
+3          HIP00602
+4          HIP00614
+           ...     
+924    Keck0119_MC1
+925    Keck0120_MC1
+926    Keck0120_MC1
+927    Keck0120_MC1
+928    Keck0120_MC1
+Name: sample_name, Length: 929, dtype: object
+#+end_example
+***** Loading
+#+CAPTION: =../tools/load_sql.py=
+#+BEGIN_SRC python :tangle ../tools/load_sql.py :exports code
+#!/usr/bin/env python3
+import load_dataframe
+
+from sqlalchemy import create_engine
+
+cols = ['sample_name'] + cdr3_v_j
+
+def load_file_into_sql(f, tablename, engine):
+    load_dataframe(f)[cols].to_sql(tablename, engine, if_exists='append')
+
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('data_file', type=argparse.FileType('r'))
+    parser.add_argument('tablename')
+    parser.add_argument('database')
+
+    args = parser.parse_args()
+    engine = create_engine(args.database)
+    load_file_into_sql(args.data_file, args.tablename, engine)
+
+if __name__ == '__main__':
+    main()
+#+END_SRC
