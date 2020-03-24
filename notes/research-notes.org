@@ -1,10 +1,17 @@
 #+TITLE: Research Notes
-#+PROPERTY: header-args :cache yes
 * Data loading
 ** Source format
 Adaptive Biotechnologies makes the raw data available as a zip archive at [[https://s3-us-west-2.amazonaws.com/publishedproject-supplements/emerson-2017-natgen/emerson-2017-natgen.zip]].
 The dataset consists of one TSV file per patient with each sequence as a row.
 Confusingly, some of the fields appear to be per-patient metadata that is repeated on each row.
+
+#+BEGIN_SRC txt :noweb yes :exports none :tangle ../tools/requirements.txt
+<<requirements>>
+#+END_SRC
+
+#+BEGIN_SRC txt :noweb-ref requirements :exports code
+pandas
+#+END_SRC
 
 #+NAME: load_data
 #+CAPTION: =../tools/load_dataframe.py=
@@ -218,16 +225,21 @@ sample['sample_name']
 Name: sample_name, Length: 929, dtype: object
 #+end_example
 ***** Loading
-#+CAPTION: =../tools/load_sql.py=
-#+BEGIN_SRC python :tangle ../tools/load_sql.py :exports code
+#+BEGIN_SRC txt :noweb-ref requirements :exports code
+sqlalchemy
+psycopg2
+#+END_SRC
+
+#+CAPTION: =../tools/populate_db.py=
+#+BEGIN_SRC python :tangle ../tools/populate_db.py :exports code
 #!/usr/bin/env python3
-import load_dataframe
+from load_dataframe import *
 
 from sqlalchemy import create_engine
 
 cols = ['sample_name'] + cdr3_v_j
 
-def load_file_into_sql(f, tablename, engine):
+def populate_db(f, tablename, engine):
     load_dataframe(f)[cols].to_sql(tablename, engine, if_exists='append')
 
 import argparse
@@ -240,7 +252,7 @@ def main():
 
     args = parser.parse_args()
     engine = create_engine(args.database)
-    load_file_into_sql(args.data_file, args.tablename, engine)
+    populate_db(args.data_file, args.tablename, engine)
 
 if __name__ == '__main__':
     main()
