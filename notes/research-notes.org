@@ -11,10 +11,10 @@ Confusingly, some of the fields appear to be per-patient metadata that is repeat
 
 #+BEGIN_SRC txt :noweb-ref requirements :exports code
 pandas
+numpy
 #+END_SRC
 
 #+NAME: load_data
-#+CAPTION: =../tools/load_dataframe.py=
 #+BEGIN_SRC python :tangle ../tools/load_dataframe.py :exports code
 import pandas as pd
 
@@ -224,13 +224,12 @@ sample['sample_name']
 928    Keck0120_MC1
 Name: sample_name, Length: 929, dtype: object
 #+end_example
-***** Loading
+***** Populating the database
 #+BEGIN_SRC txt :noweb-ref requirements :exports code
 sqlalchemy
-psycopg2
+psycopg2-binary
 #+END_SRC
 
-#+CAPTION: =../tools/populate_db.py=
 #+BEGIN_SRC python :tangle ../tools/populate_db.py :exports code
 #!/usr/bin/env python3
 from load_dataframe import *
