@@ -21,10 +21,10 @@ with open('cmv_associated_tcrs.csv') as f:
         tup = make_tuple(row)
         associated_tcrs.add(tup)
 
-from glob import glob
+from sys import argv
 from os.path import basename
 
-for name in glob('emerson-2017-natgen-tcr/*'):
+for name in argv[1:]:
     patient_name = basename(name).split('.')[0]
     n = k = 0
     with open(name) as f:
