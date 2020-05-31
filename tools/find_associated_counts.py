@@ -8,10 +8,10 @@ def make_tuple(csv_row):
         row[0], # amino_acid
         row[1], # v_family
         row[2], # v_gene
-        int(row[3]) if row[3] != 'NA' else float('nan'), # v_allele
+        int(row[3]) if row[3] != 'NA' else None, # v_allele
         row[4], # j_family
         row[5], # j_gene
-        int(row[6]) if row[6] != 'NA' else float('nan') # j_allele
+        int(row[6]) if row[6] != 'NA' else None # j_allele
     )
 
 # init associated_tcrs
