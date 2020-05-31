@@ -34,4 +34,4 @@ for name in argv[1:]:
             if tup in associated_tcrs:
                 k += 1
             n += 1
-    print(','.join([patient_name, int(n), int(k)]))
+    print(','.join([patient_name, str(n), str(k)]))
