@@ -1,0 +1,513 @@
+#+title: emerson-replication-reflections
+#+options: ^:{}
+#+setupfile: https://fniessen.github.io/org-html-themes/setup/theme-readtheorg.setup
+
+* Introduction
+** What is replication/Why is it important?
+
+Replication is a core component of the scientific method.
+Without researchers taking the time to verify each other's work, it is impossible for a field to have solid standing.
+The recent "replication crisis" has highlighted this fact and, hopefully, renewed interest in replicable work.
+
+** Broad outline of the paper
+
+I chose to replicate a bioinformatics paper published in 2017 by a group of researchers from Adaptive Biotechnologies and the Fred Hutchinson Cancer Research Center.
+Titled "Immunosequencing identifies signatures of cytomegalovirus exposure history and HLA-mediated effects on the T cell repertoire," it investigates the use of machine learning to predict the viral exposure of patients.
+The basic hypothesis of the paper is the genetic sequences of our T-cell receptors (TCRs) contain information on which virus our bodies have been exposed to (and gained immunity from).
+
+T cells are a variety of lymphocyte (themselves a type of white blood cell) that form a backbone of our adaptive immune response.
+Produced by stem cells in our bone marrow, T cells migrate to the thymus where they undergo a selection process.
+T cells that bind to antigens presented by the immune system are reproduced, and T cells that bind to the body's own cells are destroyed.
+Additionally, when T cells are replicated, they are also mutated in order to generate T cells with higher affinity.
+This amounts to an artificial selection process, where T cells are evolved by the body to respond to threats.
+
+Since TCRs are produced in this way to bind to specific antigens, we should be able to analyze them to determine which antigens the body was responding to.
+By examining the T cell repertoire as a whole, the authors posit, it is possible to determine the viral exposure history of a patient.
+To do so, they rely on a novel technique developed by Adaptive known as immunosequencing.
+Exactly as it sounds, this refers to assaying of immune system cells to determine their genetic makeup, and thus which amino acids or nucleotides encode a particular T cell receptor.
+In this case, the immunosequencing was performed on bone marrow samples.
+
+To validate the utility of their approach, they chose a very common disease: Cytomegalovirus (CMV).
+Asymptomatically present in around half of adults, the virus is often used for testing and research.
+
+** What are my goals?
+
+Of course, I cannot entirely replicate Emerson et. al.'s experiment.
+I do not have the resources, specialized equipment, or knowledge to collect bone marrow samples or sequence T cells.
+I should, however, be able to repeat their computational pipeline.
+In this case, this means starting with the genetic codes of sequenced TCRs and ending with predictions of CMV status for each patient.
+
+* Process
+** Raw data
+
+The raw data was made available by the authors as a 8.6 GB[fn:1] zip archive [[https://s3-us-west-2.amazonaws.com/publishedproject-supplements/emerson-2017-natgen/emerson-2017-natgen.zip][here]].
+Unzipped, the data weighs in at 221 GB.
+There is one TSV (Tab Separated Values) file per patient, listing all of the TCRs that were found as well as some metadata.
+The files look something like this:
+
+#+begin_example
+rearrangement	amino_acid	frame_type	rearrangement_type	templates	reads	frequency	productive_frequency	cdr3_length	v_family	v_gene	v_allele	d_family	d_gene	d_allele	j_family	j_gene	j_allele	v_deletions	d5_deletions	d3_deletions	j_deletions	n2_insertions	n1_insertions	v_index	n1_index	n2_index	d_index	j_index	v_family_ties	v_gene_ties	v_allele_ties	d_family_ties	d_gene_ties	d_allele_ties	j_family_ties	j_gene_ties	j_allele_ties	sequence_tags	v_shm_count	v_shm_indexes	antibody	sample_name	species	locus	product_subtype	kit_pool	total_templates	productive_templates	outofframe_templates	stop_templates	dj_templates	total_rearrangements	productive_rearrangements	outofframe_rearrangements	stop_rearrangements	dj_rearrangements	total_reads	total_productive_reads	total_outofframe_reads	total_stop_reads	total_dj_reads	productive_clonality	productive_entropy	sample_clonality	sample_entropy	sample_amount_ng	sample_cells_mass_estimate	fraction_productive_of_cells_mass_estimate	sample_cells	fraction_productive_of_cells	max_productive_frequency	max_frequency	counting_method	primer_set	release_date	sample_tags	fraction_productive	order_name	kit_id	total_t_cells
+ACTCTGACTGTGAGCAACATGAGCCCTGAAGACAGCAGCATATATCTCTGCAGCGTTGAAGAATCCTACGAGCAGTACTTCGGGCCG	CSVEESYEQYF	In	VJ10	311	7.66134773699554E-5	9.602057989637805E-5	33	TCRBV29	TCRBV29-01	01		unresolved		TCRBJ02	TCRBJ02-07	01	0	0	0	1	1	0	48	-1	62-1	63										null	null	null	Vb 4	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+GAATGTGAGCACCTTGGAGCTGGGGGACTCGGCCCTTTATCTTTGCGCCAGCAGCATCAAAGGGGCTCACCCCTCCACTTTGGGAAC		Out	VDJ	3088	77915	0.019194016364244615	null	38	TCRBV05	TCRBV05-01	01	TCRBD01	TCRBD01-01	01TCRBJ01	TCRBJ01-06	01	4	5	2	10	1	5	43	55	65	60	66null	null	null	Vb 5.1	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+GCTACCAGCTCCCAGACATCTGTGTACTTCTGTGCCACCACGGGTACTAGCGGGGGCCCAAGCCAGAGTACGCAGTATTTTGGCCCA	CATTGTSGGPSQSTQYF	InVDJ	1772	44434	0.010946119786034077	0.013718901759214348	51	TCRBV10	TCRBV10-03	01	TCRBD02	TCRBD02-01	01	TCRBJ02	TCRBJ02-03	01	10	3	2	8	12	8	3037	56	45	68										null	null	null	Vb 12	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+ATCCAGCGCACAGAGCAGGGGGACTCGGCCATGTATCTCTGTGCCAGCAGCTTACGAGTCGGGGGCTATGGCTACACCTTCGGTTCG	CASSLRVGGYGYTF	In	VD1763	44008	0.010841176566228286	0.013587375177105484	42	TCRBV07	TCRBV07-09		TCRBD02	TCRBD02-01	01	TCRBJ01	TCRBJ01-02	01	2	8	2	4	0	5	39	54	-159	65			01,03							null	null	null	null	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+TGCAGCAAGAAGACTCAGCTGCGTATCTCTGCACCAGCAGCCAAGGGGATCGCGGGGGGCCACTACAATGAGCAGTTCTTCGGGCCA		Out	VDJ	1241	31095	0.007660116009063547	null	52	TCRBV01	TCRBV01-01	01	TCRBD02	TCRBD02-01	01TCRBJ02	TCRBJ02-01	01	1	7	1	3	3	6	29	45	59	51	62null	null	null	null	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+GAGTCTGCCAGGCCCTCACATACCTCTCAGTACCTCTGTGCCAGCAGACGCCTCGGAGGGTTGAACACTGAAGCTTTCTTTGGACAA	CASRRLGGLNTEAFF	In	VD985	24883	0.006129817226355627	0.0076825726352462214	45	TCRBV25	TCRBV25-01	01	TCRBD02	TCRBD02-01	02	TCRBJ01	TCRBJ01-01	01	6	10	0	0	1	7	36	47	6054	61										null	null	null	Vb 11	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+GTGAGCACCTTGGAGCTGGGGGACTCGGCCCTTTATCTTTGCGCCAGCAGCTTGAGAGGCTCTGGAAACACCATATATTTTGGAGAG	CASSLRGSGNTIYF	In	VD566	14247	0.0035096855694204325	0.0043987305523591575	42	TCRBV05	TCRBV05-01	01	TCRBD02	TCRBD02-01	02	TCRBJ01	TCRBJ01-03	01	1	11	1	0	0	1	39	54	-155	59										null	null	null	Vb 5.1	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+AGGCTGGAGTCGGCTGCTCCCTCCCAGACATCTGTGTACTTCTGTGCCAGCAGACAGGACGGGAGCACTGAAGCTTTCTTTGGACAA	CASRQDGSTEAFF	In	VD506	12943	0.003188450924756697	0.003996123362054087	39	TCRBV06	TCRBV06-01	01	TCRBD02	TCRBD02-01	02	TCRBJ01	TCRBJ01-01	01	6	8	2	4	0	6	42	53	-159	65										null	null	null	null	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+TCCCTGGAGCTTGGTGACTCTGCTGTGTATTTCTGTGCCAGCAGCCGGGCCAGGGTCTTTGGAAACTATGGCTACACCTTCGGTTCG	CASSRARVFGNYGYTF	InVDJ	398	10151	0.0025006540475318883	0.0031340993779039664	48	TCRBV03	unresolved		TCRBD01	TCRBD01-01	01	TCRBJ01	TCRBJ01-02	01	4	4	3	2	8	4	3346	55	50	63		TCRBV03-01,TCRBV03-02								null	null	null	null	HIP00110	Human	TCRB	Deep	null	224859	179411	41463	3983	0	130940	104850	24105	1985	0	4059338	3238889	748535	71914	0	0.100719467	14.9981718	0.1101579	15.1260223	3636.47998	559458	0.3206871650776287	0	0.0	0.0137189021	0.0191940162	v2	Human-TCRB-PD1x	2013-12-13 22:23:05.529	Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus Diseases:Cytomegalovirus -	0.7978822284186979	null	null	0
+#+end_example
+
+The first decision that I faced was which columns were important in this dataset.
+Should I analyze =rearrangement= or =amino_acid=?
+Did the =frame_type= matter?
+I struggled with this for a while, and my questions were only compounded by the fact that the paper never addressed the raw data format whatsoever.
+Finally, I elected to stick by one definitive statement made by Emerson et. al., that a TCR sequence is defined as an unique combination of a CDR3 amino acid sequence, a V gene, and a J gene.
+This corresponded to the columns: =amino_acid= (CDR3 amino acid); =v_family=, =v_gene=, =v_allele= (V gene); and =j_family=, =j_gene=, and =j_allele= (J gene).
+When just those columns are included, the data looks like this:
+
+| amino_acid        | v_family | v_gene     | v_allele | j_family | j_gene     | j_allele |
+|-------------------+----------+------------+----------+----------+------------+----------|
+| CSVEESYEQYF       | TCRBV29  | TCRBV29-01 |       01 | TCRBJ02  | TCRBJ02-07 |       01 |
+|                   | TCRBV05  | TCRBV05-01 |       01 | TCRBJ01  | TCRBJ01-06 |       01 |
+| CATTGTSGGPSQSTQYF | TCRBV10  | TCRBV10-03 |       01 | TCRBJ02  | TCRBJ02-03 |       01 |
+| CASSLRVGGYGYTF    | TCRBV07  | TCRBV07-09 |          | TCRBJ01  | TCRBJ01-02 |       01 |
+|                   | TCRBV01  | TCRBV01-01 |       01 | TCRBJ02  | TCRBJ02-01 |       01 |
+| CASRRLGGLNTEAFF   | TCRBV25  | TCRBV25-01 |       01 | TCRBJ01  | TCRBJ01-01 |       01 |
+| CASSLRGSGNTIYF    | TCRBV05  | TCRBV05-01 |       01 | TCRBJ01  | TCRBJ01-03 |       01 |
+| CASRQDGSTEAFF     | TCRBV06  | TCRBV06-01 |       01 | TCRBJ01  | TCRBJ01-01 |       01 |
+| CASSRARVFGNYGYTF  | TCRBV03  | unresolved |          | TCRBJ01  | TCRBJ01-02 |       01 |
+
+In addition, I need to extract the patient's CMV status (positive or negative) from the TSV file.
+The =sample_tags= column stores a comma separated list of patient metadata, including the CMV status.
+
+#+begin_example
+Age:55 Years,Biological Sex:Male,Cohort:Cohort 01,Ethnic Group:Unknown
+Ethnicity,HLA MHC class I:HLA-A*03,HLA MHC class I:HLA-A*24,HLA MHC class
+I:HLA-B*07,Inferred CMV status (cross-validation): Inferred CMV -,Inferred CMV
+status: Inferred CMV -,Inferred HLA type:Inferred HLA-A*03,Inferred HLA
+type:Inferred HLA-A*24,Inferred HLA type:Inferred HLA-B*07,Racial Group:Unknown
+racial group,Species:Human,Tissue Source:gDNA,Tissue Source:PBMC,Tissue
+Source:Peripheral blood lymphocytes (PBL),Tissue Source:T cells,Virus
+Diseases:Cytomegalovirus -
+#+end_example
+
+Strangely, this value, along with other per-patient metadata, is repeated for every single sequence (row) in the file.
+Given the lengthly nature of this metadata format, this bloats the sizes of the data files significantly.
+The tested CMV status is under the =Virus Diseases= tag.
+It is important to note that some of the patients included in the raw data do not have a known CMV status and thus have no =Virus Diseases= tag.
+
+** Finding associated sequences
+
+Due to the extremely large number of TCR sequences, the paper decided to split its learning problem into two stages.
+First, they found sequences that were associated with positive CMV status (i.e. sequences that showed up in lots of infected patients but in few negative ones).
+They then built a machine learning model based on the number of those associated sequences found in a patient.
+This approach allowed them to dramatically reduce the dimensionality of the raw data and made the problem much more approachable.
+
+In order to find associated sequences, I needed to be able to count how many times a given (unique) sequence appears in both CMV-negative and CMV-positive patients.
+Based on these two counts, a statistical test with a P-value threshold would indicate whether this was an associated sequence.
+
+*** Database
+
+I chose to use a relational database (PostgreSQL) to store the sequence and patient information, hoping that it would allow me to construct efficient queries to tabulate the count information that I needed.
+
+I created one table to store patient statuses, and another to store sequences along with which patient they were found in.
+I ran into a couple issues creating the sequences table.
+First, I had to load =v_allele= and =j_allele= as numbers not strings, since different alleles are written in different formats (e.g. with or without leading zeros).
+Second, I needed to make sure that this table contained only unique sample-sequence mappings.
+There are duplicate TCR sequences recorded for the same patient that need to be filtered out first with a ~SELECT DISTINCT~.
+
+*** Filtering/Aggregating counts
+
+As mentioned above, I had to create a table of the counts of positive and negative patients in which each unique sequence appears.
+After a lot of trial and error, I came up with the following SQL query that does the job.
+
+#+begin_src sql
+SELECT SUM(cmv_status::int) AS positive, COUNT(cmv_status) AS total, amino_acid, j_family, j_gene, j_allele, v_family, v_gene, v_allele
+  INTO hip_uniq_counts FROM hip_patients
+			      JOIN hip_sample_seq_uniq ON hip_patients.sample_name = hip_sample_seq_uniq.sample_name WHERE cmv_status IS NOT NULL
+ GROUP BY amino_acid, j_family, j_gene, j_allele, v_family, v_gene, v_allele HAVING COUNT(cmv_status) > 1
+#+end_src
+
+It sums the =cmv_status= to find the number of positive patients, and counts to find the total number of patients.
+It also only includes sequences that appear in more than one patient, and discards sequences from patients where the status is not known.
+In order for this query to run efficiently, I also had to create some indices on the sequence information (this really speeds up the ~GROUP BY~).
+When I ran it, I got a table of =10801341= unique sequences with counts.
+
+*** Tests of significance
+
+Now that I had the counts information, I could focus on determining which of these more than 10 million TCR sequences were associated with CMV.
+Emerson et. al. used a one-tailed Fisher's exact test for this purpose.
+This test takes a contingency table (in my case a 2x2 one) and assesses whether different categories are associated.
+Take the following matrix as an example.
+
+|          | present | absent |
+| positive |      61 |    228 |
+| negative |      11 |    341 |
+
+The columns =present= and =absent= indicate whether or not the sequence appeared in a patient.
+The rows =positive= and =negative= indicate whether or not the patient was negative.
+For example, based on the above table, we can conclude that the sequence was present in =61= positive patients.
+Running the test on this data yields a P-value of =2.2e-13=, meaning that it is very unlikely that this table would result from chance.
+This indicates that there likely is a link between CMV-status and occurrence for this example sequence (i.e. it is CMV-associated).
+
+What does it mean that the Fisher's exact test is one-tailed?
+It means that we are only considering the possibility that there is a positive link between a sequence and CMV-status.
+We assume that there would be no TCR sequences that appear more often in patients who are not infected with CMV.
+
+In order to compute this P-value, I used the following R code.
+Assume ~positive~ and ~total~ and the positive and total counts for a TCR sequence, and that ~n_positive~ and ~n_negative~ are the total number of CMV-positive and CMV-negative patients.
+
+#+begin_src R
+present_positive = positive
+present_negative = total - present_positive
+absent_positive = n_positive - present_positive
+absent_negative = n_negative - present_negative
+cont_table = matrix(c(present_positive, present_negative, absent_positive, absent_negative), nrow = 2)
+
+fisher.test(cont_table, alternative = "greater")
+#+end_src
+
+Now that we can compute P-values, we need to define a threshold for significance.
+The paper used a cross-validation scheme to do so, recomputing the list of associated TCR sequences many times and assessing model performance for each new set of sequences.
+This allowed them to find the P-value threshold that led to optimal model performance.
+Due to time and resource limitations, however, I simply accepted their threshold of =1e-4=.
+This resulted in a list of associated sequences that was exactly the same as what Emerson et. al. found except for two sequences that I found to be associated but they did not.
+Here a sample of that list (which contains 166 sequences in full).
+Note that there is now a =NA= in the place of an empty string or =unresolved= for null values, and that all allele numbers are printed in the same format.
+
+| amino_acid      | v_family | v_gene     | v_allele | j_family | j_gene     | j_allele |
+|-----------------+----------+------------+----------+----------+------------+----------|
+| CAISESQDRGHEQYF | TCRBV10  | TCRBV10-03 |        1 | TCRBJ02  | TCRBJ02-07 |        1 |
+| CASASANYGYTF    | TCRBV12  | NA         |       NA | TCRBJ01  | TCRBJ01-02 |        1 |
+| CASGRDTYEQYF    | TCRBV02  | TCRBV02-01 |        1 | TCRBJ02  | TCRBJ02-07 |        1 |
+| CASMGGASYEQYF   | TCRBV27  | TCRBV27-01 |        1 | TCRBJ02  | TCRBJ02-07 |        1 |
+| CASNRDRGRYEQYF  | TCRBV06  | TCRBV06-01 |        1 | TCRBJ02  | TCRBJ02-07 |        1 |
+| CASRDRDRVNTEAFF | TCRBV06  | TCRBV06-01 |        1 | TCRBJ01  | TCRBJ01-01 |        1 |
+| CASRDWDYTDTQYF  | TCRBV02  | TCRBV02-01 |        1 | TCRBJ02  | TCRBJ02-03 |        1 |
+| CASRGQGAGELFF   | TCRBV02  | TCRBV02-01 |        1 | TCRBJ02  | TCRBJ02-02 |        1 |
+| CASRGQGWDEKLFF  | TCRBV06  | TCRBV06-05 |        1 | TCRBJ01  | TCRBJ01-04 |        1 |
+
+
+** Machine learning model
+#+property: header-args:ipython :session :results raw drawer :eval never-export
+*** Associated sequence counts
+
+Before I can train the model, I need to compute the number of CMV-associated sequences that are present in each patient.
+I also need to record the total number of sequences for each patient.
+I wrote a short Python script to do this, outputting a table that shows the patient name, CMV status, total number of sequences, and number of associated sequences.
+For the training cohort, this was saved under =hip_cmv_n_k.csv=.
+For the testing cohort, it was saved under =keck_cmv_n_k.csv=.
+
+*** Training
+
+#+begin_src ipython :exports none
+import IPython
+from tabulate import tabulate
+
+class OrgFormatter(IPython.core.formatters.BaseFormatter):
+    def __call__(self, obj):
+        try:
+            return tabulate(obj, headers='keys',
+                            tablefmt='orgtbl', showindex='always')
+        except:
+            return None
+
+ip = get_ipython()
+ip.display_formatter.formatters['text/org'] = OrgFormatter()
+#+end_src
+
+#+RESULTS:
+:results:
+# Out[2]:
+:end:
+
+#+begin_src ipython
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+#+end_src
+
+#+RESULTS[28585e27f4b7b008e3ef9aa5eb8550c7c1a11373]:
+:results:
+# Out[3]:
+:end:
+
+First I need to load the training data.
+Following the convention adopted by the paper, I use ~n~ for the total number of sequences in a patient and ~k~ for the number of CMV-associated sequences.
+
+#+begin_src ipython :exports both
+hip = pd.read_csv('hip_cmv_n_k.csv', names=['patient', 'status', 'n', 'k'])
+hip.head()
+#+end_src
+
+#+RESULTS[1aa8c2e870b514b0fbe38a67b5bde5b4f31da002]:
+:results:
+# Out[4]:
+|    | patient   |   status |      n |   k |
+|----+-----------+----------+--------+-----|
+|  0 | HIP00110  |        0 | 130940 |   0 |
+|  1 | HIP00169  |        0 | 115919 |   1 |
+|  2 | HIP00594  |        1 | 198830 |  10 |
+|  3 | HIP00602  |        0 | 248959 |   0 |
+|  4 | HIP00614  |        0 | 128274 |   1 |
+:end:
+
+#+begin_src ipython
+def plot_dataset(df):
+    for s,c,l in ((0,'blue','CMV-'), (1,'red','CMV+')):
+        rows = df[df.status == s]
+        plt.scatter(rows.n, rows.k, c = c, label = l, alpha = 0.2, edgecolors = 'none')
+        plt.title('Total TCRs vs. CMV-Associated TCRs')
+        plt.xlabel('n'); plt.ylabel('k')
+        plt.legend()
+    plt.show()
+#+end_src
+
+#+RESULTS[0fe809b590c972698b59212509ed67d76bfd943a]:
+:results:
+# Out[5]:
+:end:
+
+By plotting the number of total and associated sequences, we can see that there does appear to be a clear separation between CMV-positive and CMV-negative patients.
+
+#+begin_src ipython :exports both
+plot_dataset(hip)
+#+end_src
+
+#+RESULTS[fa61c961b74c616433d9116806380066750d3a3c]:
+:results:
+# Out[6]:
+[[file:./obipy-resources/xrxODQ.png]]
+:end:
+
+We only want to train our model for patients with a known (not null) status.
+We are trying to predict ~y~ (the status) given ~X~ (the counts).
+These variable names are a scikit-learn convention.
+
+#+begin_src ipython
+# only train for patients w/ known status
+hip_known = hip[hip.status.notna()]
+X = hip_known[['n','k']]
+y = hip_known.status
+#+end_src
+
+#+RESULTS[1305f96a86ce7237808944300fd8572371ffda17]:
+:results:
+# Out[7]:
+:end:
+
+This histogram shows the distribution of both the total and associated counts.
+It's helpful to keep basic information like this in mind as we train the model.
+
+#+begin_src ipython :exports both
+plt.subplot(121)
+plt.hist(hip_known.n, 100)
+plt.title('n')
+plt.subplot(122)
+plt.hist(hip_known.k, 100)
+plt.title('k')
+plt.show()
+#+end_src
+
+#+RESULTS[d575bfbf4c3e9e53a35ef084bf24547c8e2ebaae]:
+:results:
+# Out[8]:
+[[file:./obipy-resources/6qsz23.png]]
+:end:
+
+The paper uses a naive Bayesian model.
+They assume that the class (CMV-status) priors are given by a beta-binomial distribution that is unique for each class.
+In order to find the class-wise parameters for these two distributions, they employ standard gradient ascent methods.
+I did not do this.
+Instead, I simply chose to use the Gaussian Naive Bayes model that comes with scikit-learn.
+I am unsure how much this influenced my model performance.
+
+#+begin_src ipython
+from sklearn.naive_bayes import GaussianNB
+#+end_src
+
+#+RESULTS[c119b41abbf0714a9c2b95b61f47219c0d9f1b81]:
+:results:
+# Out[9]:
+:end:
+
+Now we fit the Gaussian Naive Bayes model to the training data.
+
+#+begin_src ipython
+gnb = GaussianNB()
+gnb.fit(X, y)
+#+end_src
+
+#+RESULTS[78aaac78fa108a95ee8062083379da9208febab3]:
+:results:
+# Out[10]:
+: GaussianNB()
+:end:
+
+*** Testing
+
+Finally, I can load the testing data.
+To reiterate, this data was never used to find CMV-associated sequences.
+Instead, its only purpose is to assess model performance.
+
+#+begin_src ipython :exports both
+keck = pd.read_csv('keck_cmv_n_k.csv', names=['patient', 'status', 'n', 'k'])
+keck.head()
+#+end_src
+
+#+RESULTS[0233f18d9bf69ac7ee051d7d9a505b4ef6e8ac3e]:
+:results:
+# Out[11]:
+|    | patient      |   status |      n |   k |
+|----+--------------+----------+--------+-----|
+|  0 | Keck0001_MC1 |        1 | 131030 |   1 |
+|  1 | Keck0002_MC1 |        0 | 112895 |   0 |
+|  2 | Keck0003_MC1 |        0 | 233505 |   2 |
+|  3 | Keck0004_MC1 |        1 | 152898 |  13 |
+|  4 | Keck0005_MC1 |        0 | 173862 |   1 |
+:end:
+
+Interestingly, this dataset appears to be a bit noisier than the training data (i.e. there is less of a clear relationship between ~n~ and ~k~ and CMV-status).
+I suppose this is a result of the fact that the associated sequences were computed from another dataset.
+This reiterates the importance of having untouched data available to test your model on.
+
+#+begin_src ipython :exports both
+plot_dataset(keck)
+#+end_src
+
+#+RESULTS[ad2a4a9f046b640799bab539ca5570cdef86bc7b]:
+:results:
+# Out[12]:
+[[file:./obipy-resources/aPMWry.png]]
+:end:
+
+We can now see how accurate the model is by finding the percentage of patients for which it does predict CMV status correctly.
+
+#+begin_src ipython :exports both
+gnb.score(keck[['n','k']], keck.status)
+#+end_src
+
+#+RESULTS[7ad9664f71f696fc556ab217c7f8be86c8875c2d]:
+:results:
+# Out[16]:
+: 0.7583333333333333
+:end:
+
+We can also view a list of the patients that were mispredicted.
+There appear to be more false negatives than false positives (i.e. more CMV-positive patients that the model thought were negative than CMV-negative patients the model thought was positive).
+
+#+begin_src ipython :exports both
+# mispredictions
+keck[gnb.predict(keck[['n','k']]) != keck.status]
+#+end_src
+
+#+RESULTS[4275bf25f405f9e120aaf007987510a1fc5891cd]:
+:results:
+# Out[14]:
+|     | patient      |   status |      n |   k |
+|-----+--------------+----------+--------+-----|
+|   0 | Keck0001_MC1 |        1 | 131030 |   1 |
+|   6 | Keck0007_MC1 |        1 | 118242 |   6 |
+|   8 | Keck0009_MC1 |        1 | 154804 |   4 |
+|  14 | Keck0015_MC1 |        1 | 146083 |   5 |
+|  17 | Keck0018_MC1 |        1 | 128571 |   2 |
+|  22 | Keck0023_MC1 |        1 | 130401 |   2 |
+|  25 | Keck0026_MC1 |        1 |  98398 |   2 |
+|  29 | Keck0030_MC1 |        1 | 145084 |   2 |
+|  34 | Keck0035_MC1 |        1 | 127026 |   2 |
+|  39 | Keck0040_MC1 |        1 | 189838 |   0 |
+|  42 | Keck0043_MC1 |        1 | 110019 |   2 |
+|  43 | Keck0044_MC1 |        1 | 148962 |   5 |
+|  48 | Keck0049_MC1 |        0 | 251601 |   8 |
+|  49 | Keck0050_MC1 |        1 | 130021 |   1 |
+|  50 | Keck0051_MC1 |        0 |  97036 |  13 |
+|  51 | Keck0052_MC1 |        1 |  43443 |   2 |
+|  52 | Keck0053_MC1 |        1 | 149598 |   4 |
+|  61 | Keck0062_MC1 |        1 | 277108 |   4 |
+|  64 | Keck0065_MC1 |        1 | 214103 |   5 |
+|  66 | Keck0067_MC1 |        1 | 184162 |   1 |
+|  67 | Keck0068_MC1 |        1 | 281142 |   3 |
+|  72 | Keck0073_MC1 |        1 | 327165 |   3 |
+|  74 | Keck0075_MC1 |        1 | 225263 |   3 |
+|  76 | Keck0077_MC1 |        1 | 327011 |   4 |
+|  83 | Keck0084_MC1 |        1 | 333601 |   3 |
+|  95 | Keck0096_MC1 |        1 | 406255 |   6 |
+|  98 | Keck0099_MC1 |        1 | 331765 |   3 |
+| 106 | Keck0107_MC1 |        0 | 324737 |   7 |
+| 107 | Keck0108_MC1 |        1 | 182806 |   2 |
+:end:
+
+Let's directly compare our results with those found by Emerson et. al.
+The raw data contains their predictions in the same metadata field as CMV-status (=sample_tags=).
+I pulled all of those predictions out into a CSV file.
+
+#+begin_src ipython :exports both
+paper_inferred = pd.read_csv('all_inferred.csv', names=['patient', 'status'])
+paper_inferred.head()
+#+end_src
+
+#+RESULTS:
+:results:
+# Out[15]:
+|    | patient   |   status |
+|----+-----------+----------|
+|  0 | HIP00110  |        0 |
+|  1 | HIP00169  |        0 |
+|  2 | HIP00594  |        1 |
+|  3 | HIP00602  |        0 |
+|  4 | HIP00614  |        0 |
+:end:
+
+I need to split those predictions into those for the training and testing datasets.
+
+#+begin_src ipython
+paper_inferred_hip = paper_inferred[paper_inferred.patient.str.startswith('HIP')]
+paper_inferred_hip_known = paper_inferred_hip[paper_inferred_hip.status.notna()]
+paper_inferred_keck = paper_inferred[paper_inferred.patient.str.startswith('Keck')].reset_index()
+#+end_src
+
+#+RESULTS:
+:results:
+# Out[18]:
+:end:
+
+Now I can see how I did compared to them.
+It appears that I did worse, getting many more wrong than they got right while only correctly predicting a few that they missed.
+Since my list of associated sequences was so similar to theirs, this is likely a result of my machine learning model.
+
+#+begin_src ipython :exports both :results output list
+# things I get right and they didn't
+print('got right instead:', ((gnb.predict(keck[['n','k']]) != paper_inferred_keck.status) & (gnb.predict(keck[['n','k']]) == keck.status)).sum())
+# things I get wrong and they didn't
+print('got wrong instead:', ((gnb.predict(keck[['n','k']]) != paper_inferred_keck.status) & (gnb.predict(keck[['n','k']]) != keck.status)).sum())
+#+end_src
+
+#+RESULTS:
+:results:
+- got right instead: 5
+- got wrong instead: 21
+:end:
+
+* Conclusions
+** Implicit knowledge
+
+Something that struck me when replicating this paper was the amount of implicit knowledge that it contained.
+When I started out, it felt like the paper (along with its supplementary figures and data) had more than enough information for me to reproduce all of its steps.
+Instead, I quickly realized that much was undocumented.
+From the raw data format to the exact machine learning setup, there were many key parts of the system without adequate description.
+This left me in the unenviable position of making my own decisions and hoping they matched up with what Emerson et. al. intended.
+Replication is already undergone much less often than it should be.
+In my opinion, authors should do whatever they can to make this process easier, not harder.
+
+** Open code
+
+Building off the idea of implicit knowledge that was not reflected in the paper, I often found myself wishing I had access to the code that they used for data processing and analysis.
+While it is great that the authors made their raw data publicly available, it would have made my life a lot easier if they did the same with their code.
+If this were the case, I could much easier check my own assumptions and ensure that I was undergoing a faithful replication of their work.
+Additionally, it would have reduced the amount of time I had to spend reverse-engineering their exact approach and allowed me to expand on their research and extend it in new directions (e.g. evaluating different machine learning models).
+As it was, it took most of my effort just making sure I was doing something comparable to what they did, leaving little time to try something new.
+
+* Footnotes
+
+[fn:1] For this value, and all digital storage values hereafter, I adopt the SI convention and use GB to mean one billion, or 10^{9}, bytes.
